@@ -10,10 +10,15 @@ from tensorflow.keras.layers import Dense, Dropout
 from tensorflow.keras.layers import LSTM
 from tensorflow.keras.models import Sequential
 
-import os
-os.environ['PYTHONIOENCODING'] = 'utf-8'
+#import os
+#os.environ['PYTHONIOENCODING'] = 'utf-8'
+#import sys
+#sys.stdout.reconfigure(encoding='utf-8')
+
+import io
 import sys
-sys.stdout.reconfigure(encoding='utf-8')
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
 
 # define timeline for stock pull
 start = '2019-01-01' # from specified date
