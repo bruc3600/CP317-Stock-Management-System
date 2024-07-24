@@ -9,6 +9,9 @@ from tensorflow import keras
 from tensorflow.keras.layers import Dense, Dropout, LSTM, Input
 #from tensorflow.keras.layers import LSTM
 from tensorflow.keras.models import Sequential, load_model
+import streamlit as st
+from fbprophet import Prophet
+
 
 
 #import os
@@ -145,6 +148,13 @@ def plot_predictions(y_test, y_predicted):
     plt.legend()
     plt.show()
 
+def create_site():
+    st.title("Stock Predictor App")
+    stocks = ("APPL", "GOOG", "MSFT", "TSLA", "GME")
+    selected_stock = st.selectbox("Select a stock for prediction", stocks)
+    n_years = st.slider("Years of prediction:", 1, 4)
+    period = n_years * 365
+
 
 def main():
     # define timeline for stock pull
@@ -204,5 +214,6 @@ def run_model():
     else:
         print("Failed to fetch stock data")
 
-main()
+#main()
 #run_model()
+create_site()
