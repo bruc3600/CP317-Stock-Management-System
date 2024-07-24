@@ -2,6 +2,13 @@ import streamlit as st
 import yfinance as yf
 from datetime import datetime
 from plotly import graph_objs as go
+from prophet import Prophet
+from prophet.plot import plot_plotly
+import numpy as np
+import pandas as pd
+
+
+
 
 
 #import io
@@ -21,9 +28,11 @@ def create_site():
     period = n_years * 365
     data_load_state = st.text("Load data...")
     data = fetch_stock_data(selected_stock, start, end)
+    data = preprocess_data(data)
     data_load_state.text("Loading data... done!")
     st.subheader("Raw data")
     st.write(data.tail())
+    plot_raw_data(data)
 
 
 
@@ -43,11 +52,18 @@ def preprocess_data(data):
     #data = data.drop(['Date', 'Adj Close'], axis = 1)
     return data
 
-def plot_raw_data():
-
-
-
-
+def plot_raw_data(data):
+    if data is not None:
+        if 'Date' in data.columns:
+            figure = go.Figure()
+            figure.add_trace(go.Scatter(x=data['Date'], y=data['Open'], name='stock_open'))
+            figure.add_trace(go.Scatter(x=data['Date'], y=data['Close'], name='stock_close'))
+            figure.layout.update(title_text="Time Series Data", xaxis_rangeslider_visible=True)
+            st.plotly_chart(figure)
+        else:
+            st.error("The 'Date' column is missing from the data")
+    else:
+        st.error("Data is not available.")
 
 
 
