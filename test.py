@@ -8,9 +8,6 @@ import numpy as np
 import pandas as pd
 
 
-
-
-
 #import io
 #import sys
 #sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')

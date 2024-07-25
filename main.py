@@ -214,6 +214,6 @@ def run_model():
     else:
         print("Failed to fetch stock data")
 
-#main()
+main()
 #run_model()
-create_site()
+#create_site()
