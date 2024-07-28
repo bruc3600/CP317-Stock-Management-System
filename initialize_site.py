@@ -14,9 +14,11 @@ end = datetime.now().strftime('%Y-%m-%d') # to todays date
 
 def create_site():
     st.title("Stock Predictor App") # main title
-    stocks = ("AAPL", "GOOG", "META", "TSLA", "GME") # current list of stocks, needs updated to dynamic selection
-    selected_stock = st.selectbox("Select a stock for prediction", stocks) 
-    n_years = st.slider("Years of prediction:", 1, 4) # slider provides years for prediction
+    #stocks = ["AAPL", "GOOG", "META", "TSLA", "GME"] # current list of stocks, needs updated to dynamic selection
+    #selected_stock = "APPL"
+    selected_stock = select_stock()
+
+    n_years = st.slider("Years of prediction:", 1, 4, key="years_slider") # slider provides years for prediction
     period = n_years * 365
     data_load_state = st.text("Load data...")
     data = fetch_stock_data(selected_stock, start, end) # loads data
@@ -27,6 +29,28 @@ def create_site():
     plot_raw_data(data) # runs plot raw data
     forecast(data, period) # runs prediction model
 
+def select_stock():
+    if 'stocks' not in st.session_state:
+        st.session_state.stocks = ["AAPL", "GOOG", "META", "TSLA", "GME"]
+    new_stock = st.text_input("Enter a new stock symbol to add: ", key="new_stock")
+    if st.button("Add stock", key="add_stock_button"):
+        add_stock_to_list()
+        #st.experimental_rerun()
+    selected_stock = st.selectbox("Select a stock for prediction", st.session_state.stocks, key="selected_stock")
+    return selected_stock
+
+def add_stock_to_list():
+    new_stock = st.session_state.new_stock.strip().upper()
+    if new_stock:
+        temp = fetch_stock_data(new_stock, start, end)
+        if temp is None or temp.empty:
+            st.error("Please enter a valid stock symbol.")
+        elif new_stock and new_stock not in st.session_state.stocks:
+            st.session_state.stocks.append(new_stock)
+            st.success(f"{new_stock} added to the list!")
+        elif new_stock in st.session_state.stocks:
+            st.warning(f"{new_stock} is already in the list!")
+    
 
 
 
