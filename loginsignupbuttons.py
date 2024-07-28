@@ -1,8 +1,9 @@
 import streamlit as st
+import sqlite3
 
 def buttons():
-    # Check if the user is logged in and adjust the display accordingly
-    if 'logged_in' not in st.session_state or not st.session_state['logged_in']:
+    # Adjust display based on login status
+    if not st.session_state.get('logged_in', False):
         col1, col2, col3 = st.columns([0.55, 0.1, 0.1])
         col1.write("")
 
@@ -16,7 +17,7 @@ def buttons():
         col1.write(f"Welcome, {st.session_state['user_name']}!")
 
 def display_page():
-    # Redirect to the home page after login or initial load
+    # Control page display based on session state
     if 'page' not in st.session_state:
         st.session_state['page'] = 'home'
 
@@ -28,34 +29,77 @@ def display_page():
         home_page()
 
 def home_page():
-    st.write("This is the Home Page. Choose an option above if not logged in or enjoy the content.")
+    st.write("Welcome to the Home Page. Select an option from the menu.")
 
 def login_page():
     st.title("Login Page")
-    form = st.form(key='login_form')
-    email = form.text_input("Email")
-    password = form.text_input("Password", type="password")
-    submit_button = form.form_submit_button("Login")
+    with st.form(key='login_form'):
+        email = st.text_input("Email")
+        password = st.text_input("Password", type="password")
+        submit_button = st.form_submit_button("Login")
 
-    if submit_button:
-        # Dummy authentication mechanism
-        if authenticate_user(email, password):
+        if submit_button and authenticate_user(email, password):
             st.session_state['logged_in'] = True
-            st.session_state['user_name'] = email  # Simulating user's name as email
+            st.session_state['user_name'] = email  # Example user display
             st.session_state['page'] = 'home'
-        else:
+        elif submit_button:
             st.error("Login failed. Check your credentials.")
 
 def signup_page():
     st.title("Sign Up Page")
-    st.write("Sign up functionality not implemented yet.")
+    with st.form(key='signup_form'):
+        name = st.text_input("Name")
+        email = st.text_input("Email")
+        password = st.text_input("Password", type="password")
+        submit_button = st.form_submit_button("Sign Up")
+
+        if submit_button:
+            result = add_user_to_db(name, email, password)
+            if result == "success":
+                st.success("You have successfully signed up!")
+            elif result == "duplicate":
+                st.error("This email already exists. Please use a different email or log in.")
+            else:
+                st.error("Failed to add user. Please try again.")
+
+def add_user_to_db(name, email, password):
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    try:
+        c.execute("INSERT INTO users (name, email, password) VALUES (?, ?, ?)", (name, email, password))
+        conn.commit()
+        return "success"
+    except sqlite3.IntegrityError:
+        return "duplicate"
+    except Exception as e:
+        print(f"Database error: {e}")
+        return "failure"
+    finally:
+        conn.close()
 
 def authenticate_user(email, password):
-    # This is a dummy function to simulate authentication
-    # In real scenarios, this should check against a database or authentication service
-    return email == "user@example.com" and password == "password"
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    c.execute("SELECT password FROM users WHERE email = ?", (email,))
+    db_password = c.fetchone()
+    conn.close()
+    return db_password and db_password[0] == password
 
-# Entry point for the application
-if __name__ == '__main__':
-    buttons()
-    display_page()
+def create_database():
+    conn = sqlite3.connect('users.db')
+    c = conn.cursor()
+    try:
+        c.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            name TEXT,
+            email TEXT PRIMARY KEY,
+            password TEXT
+        )
+        ''')
+        conn.commit()
+    except Exception as e:
+        print(f"Error creating database table: {e}")
+    finally:
+        conn.close()
+
+create_database()
