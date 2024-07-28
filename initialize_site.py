@@ -8,29 +8,24 @@ import numpy as np
 import pandas as pd
 
 
-#import io
-#import sys
-#sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
-#sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
-
 
 start = '2019-01-01' # from specified date
 end = datetime.now().strftime('%Y-%m-%d') # to todays date
 
 def create_site():
-    st.title("Stock Predictor App")
-    stocks = ("AAPL", "GOOG", "META", "TSLA", "GME")
-    selected_stock = st.selectbox("Select a stock for prediction", stocks)
-    n_years = st.slider("Years of prediction:", 1, 4)
+    st.title("Stock Predictor App") # main title
+    stocks = ("AAPL", "GOOG", "META", "TSLA", "GME") # current list of stocks, needs updated to dynamic selection
+    selected_stock = st.selectbox("Select a stock for prediction", stocks) 
+    n_years = st.slider("Years of prediction:", 1, 4) # slider provides years for prediction
     period = n_years * 365
     data_load_state = st.text("Load data...")
-    data = fetch_stock_data(selected_stock, start, end)
-    data = preprocess_data(data)
+    data = fetch_stock_data(selected_stock, start, end) # loads data
+    data = preprocess_data(data) # resets index (gives date an actual value rather than index)
     data_load_state.text("Loading data... done!")
-    st.subheader("Raw data")
-    st.write(data.tail())
-    plot_raw_data(data)
-    forecast(data, period)
+    st.subheader("Raw data") # header for data
+    st.write(data.tail()) # prints tail end of data 
+    plot_raw_data(data) # runs plot raw data
+    forecast(data, period) # runs prediction model
 
 
 
