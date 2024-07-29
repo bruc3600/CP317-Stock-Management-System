@@ -8,7 +8,8 @@ import numpy as np
 import pandas as pd
 from loginsignupbuttons import buttons, display_page
 from site_background import background
-import database
+from signals import plot_signals
+
 
 
 start = '2019-01-01' # from specified date
@@ -42,6 +43,8 @@ def create_site():
             st.write(data.tail())
             plot_raw_data(data)
             forecast(data, period)
+            plot_signals(data, selected_stock)
+
     else:
         st.title("Please log in to access the Stock Predictor App")  
 
@@ -66,6 +69,7 @@ def add_stock_to_list():
             st.success(f"{new_stock} added to the list!")
         elif new_stock in st.session_state.stocks:
             st.warning(f"{new_stock} is already in the list!")
+
 
 
 @st.cache_data # save data to cache to make faster
