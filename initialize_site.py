@@ -6,6 +6,7 @@ from prophet import Prophet
 from prophet.plot import plot_plotly
 import numpy as np
 import pandas as pd
+from signals import plot_signals
 
 
 
@@ -15,8 +16,8 @@ end = datetime.now().strftime('%Y-%m-%d') # to todays date
 def create_site():
     st.title("Stock Predictor App") # main title
     stocks = ("AAPL", "GOOG", "META", "TSLA", "GME") # current list of stocks, needs updated to dynamic selection
-    selected_stock = st.selectbox("Select a stock for prediction", stocks) 
-    n_years = st.slider("Years of prediction:", 1, 4) # slider provides years for prediction
+    selected_stock = st.selectbox("Select a stock for prediction", stocks,) 
+    n_years = st.slider("Years of prediction:", 1, 4,) # slider provides years for prediction
     period = n_years * 365
     data_load_state = st.text("Load data...")
     data = fetch_stock_data(selected_stock, start, end) # loads data
@@ -26,6 +27,7 @@ def create_site():
     st.write(data.tail()) # prints tail end of data 
     plot_raw_data(data) # runs plot raw data
     forecast(data, period) # runs prediction model
+    plot_signals(data, selected_stock)
 
 
 
@@ -83,6 +85,7 @@ def forecast(data, period):
     st.write('Forecast components')
     figure2 = model.plot_components(forecast)
     st.write(figure2)
+
 
 
 # for now this is main function that runs (calls sub functions)
