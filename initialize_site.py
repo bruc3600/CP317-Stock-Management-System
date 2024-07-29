@@ -7,6 +7,7 @@ from prophet.plot import plot_plotly
 import numpy as np
 import pandas as pd
 from loginsignupbuttons import buttons, display_page
+from site_background import background
 
 
 start = '2019-01-01' # from specified date
@@ -15,6 +16,7 @@ end = datetime.now().strftime('%Y-%m-%d') # to todays date
 def create_site():
     buttons()  # Handles the display and functionality of login/signup buttons
     display_page()  # Manages what page to display based on login status
+    background() # Import background image for website
     
     # Only show the main content if the user is logged in
     if st.session_state.get('logged_in', False):
@@ -35,7 +37,7 @@ def create_site():
             plot_raw_data(data)
             forecast(data, period)
     else:
-        st.title("Please log in to access the Stock Predictor App")
+        st.title("Please log in to access the Stock Predictor App")  
 
 def select_stock():
     if 'stocks' not in st.session_state:
@@ -113,6 +115,8 @@ def forecast(data, period):
     st.write('Forecast components')
     figure2 = model.plot_components(forecast)
     st.write(figure2)   
+
+
 
 # for now this is main function that runs (calls sub functions)
 create_site()

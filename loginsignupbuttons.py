@@ -7,20 +7,22 @@ def buttons():
         col1, col2, col3 = st.columns([0.55, 0.1, 0.1])
         col1.write("")
 
-        if col2.button('Login'):
+        # Ensure buttons have unique keys to prevent DuplicateWidgetID error
+        if col2.button('Login', key='login_button'):
             st.session_state['page'] = 'login'
         
-        if col3.button('Sign Up'):
+        if col3.button('Sign Up', key='signup_button'):
             st.session_state['page'] = 'signup'
     else:
         col1, col2 = st.columns([0.65, 0.1])
         col1.write(f"Welcome, {st.session_state['user_name']}!")
 
 def display_page():
-    # Control page display based on session state
+    # Ensure 'page' state initialization
     if 'page' not in st.session_state:
         st.session_state['page'] = 'home'
 
+    # Page rendering based on session state
     if st.session_state['page'] == 'login':
         login_page()
     elif st.session_state['page'] == 'signup':
@@ -34,8 +36,8 @@ def home_page():
 def login_page():
     st.title("Login Page")
     with st.form(key='login_form'):
-        email = st.text_input("Email")
-        password = st.text_input("Password", type="password")
+        email = st.text_input("Email", key='login_email')
+        password = st.text_input("Password", type="password", key='login_password')
         submit_button = st.form_submit_button("Login")
 
         if submit_button and authenticate_user(email, password):
@@ -48,15 +50,18 @@ def login_page():
 def signup_page():
     st.title("Sign Up Page")
     with st.form(key='signup_form'):
-        name = st.text_input("Name")
-        email = st.text_input("Email")
-        password = st.text_input("Password", type="password")
+        name = st.text_input("Name", key='signup_name')
+        email = st.text_input("Email", key='signup_email')
+        password = st.text_input("Password", type="password", key='signup_password')
         submit_button = st.form_submit_button("Sign Up")
 
         if submit_button:
             result = add_user_to_db(name, email, password)
             if result == "success":
                 st.success("You have successfully signed up!")
+                st.session_state['page'] = 'home'
+                st.session_state['logged_in'] = True
+                st.session_state['user_name'] = name
             elif result == "duplicate":
                 st.error("This email already exists. Please use a different email or log in.")
             else:
