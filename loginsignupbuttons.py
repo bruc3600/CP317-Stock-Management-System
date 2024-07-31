@@ -1,5 +1,6 @@
 import streamlit as st
 import sqlite3
+import re
 
 def buttons():
     # Adjust display based on login status
@@ -40,12 +41,17 @@ def login_page():
         password = st.text_input("Password", type="password", key='login_password')
         submit_button = st.form_submit_button("Login")
 
-        if submit_button and authenticate_user(email, password):
-            st.session_state['logged_in'] = True
-            st.session_state['user_name'] = email  # Example user display
-            st.session_state['page'] = 'home'
-        elif submit_button:
-            st.error("Login failed. Check your credentials.")
+        if submit_button:
+            authenticated, user_name = authenticate_user(email, password)  # Now returns a tuple
+            if authenticated:
+                st.session_state['logged_in'] = True
+                st.session_state['user_name'] = user_name  # Display the user's name
+                st.session_state['page'] = 'home'
+                st.success(f"You have successfully logged in, {user_name}!")  # Include user's name in the message
+            else:
+                st.error("Login failed. Check your credentials.")
+
+
 
 def signup_page():
     st.title("Sign Up Page")
@@ -56,6 +62,23 @@ def signup_page():
         submit_button = st.form_submit_button("Sign Up")
 
         if submit_button:
+            error_messages = []
+
+            # Email validation
+            if not re.match(r"[^@]+@[^@]+\.[^@]+", email):
+                error_messages.append("Invalid email format. Please enter a valid email address.")
+
+            # Password length check
+            if len(password) < 8:
+                error_messages.append("Password must be at least 8 characters long.")
+
+            # Display all accumulated error messages
+            if error_messages:
+                for error in error_messages:
+                    st.error(error)
+                return  # Return after displaying all errors to avoid further processing
+
+            # Attempt to add user to database
             result = add_user_to_db(name, email, password)
             if result == "success":
                 st.success("You have successfully signed up!")
@@ -85,10 +108,15 @@ def add_user_to_db(name, email, password):
 def authenticate_user(email, password):
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
-    c.execute("SELECT password FROM users WHERE email = ?", (email,))
-    db_password = c.fetchone()
-    conn.close()
-    return db_password and db_password[0] == password
+    try:
+        c.execute("SELECT name, password FROM users WHERE email = ?", (email,))
+        user_info = c.fetchone()
+        if user_info and user_info[1] == password:
+            return True, user_info[0]  # Return True and the user's name
+        else:
+            return False, None
+    finally:
+        conn.close()
 
 def create_database():
     conn = sqlite3.connect('users.db')

@@ -31,6 +31,11 @@ def create_site():
 
         data_load_state = st.text("Loading data...")
         data = fetch_stock_data(selected_stock, start='2019-01-01', end=datetime.now().strftime('%Y-%m-%d'))
+        #db = database.get_db()
+
+        #Save to MongoDB
+        #database.save_to_mongo(db, "stock_prices", data)
+
         if data is not None:
             data = preprocess_data(data)
             data_load_state.text("Loading data... done!")
@@ -41,7 +46,7 @@ def create_site():
             plot_signals(data, selected_stock)
 
     else:
-        st.title("Please log in to access the Stock Predictor App")  
+        st.title("Please log in to access the Stock Predictor App")
 
 def select_stock():
     if 'stocks' not in st.session_state:
