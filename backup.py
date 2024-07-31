@@ -7,12 +7,9 @@ from sklearn.preprocessing import MinMaxScaler
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.layers import Dense, Dropout, LSTM, Input
-#from tensorflow.keras.layers import LSTM
 from tensorflow.keras.models import Sequential, load_model
 import streamlit as st
 from fbprophet import Prophet
-import pymongo from MongoClient
-import database
 
 
 
@@ -57,19 +54,17 @@ def fetch_and_store_stock_data(ticker, start, end):
 
 def fetch_stock_data(ticker, start, end):
     try:
-        df = yf.download('TSLA', start=start, end=end) # pull TSLA stock as start point, from specified start to end date
+        df = yf.download('TSLA', start=start, end=end)  # pull TSLA stock as start point, from specified start to end date
         return df
     except Exception as e:
-        print("Failed to fetch data:", e) # in case of error, print exception rather than crashing.
+        print("Failed to fetch data:", e)  # in case of error, print exception rather than crashing.
         return None
-    
 
 # format and create index for values; remove date and Adj Close from value tables
 def preprocess_data(df):
     df = df.reset_index()
-    df = df.drop(['Date', 'Adj Close'], axis = 1)
+    df = df.drop(['Date', 'Adj Close'], axis=1)
     return df
-
 
 def plot_stock_data(df):
     # create moving averages for 100 and 200 days
@@ -78,21 +73,21 @@ def plot_stock_data(df):
 
     # create plot
     plt.figure(figsize=(10, 5))
-    plt.plot(df['Close'], label='TSLA Close Price') # plots Closing price, adds label
-    plt.plot(mov_avg_100, 'r', label='Moving average 100 days') # plots MA for 100 days in red
-    plt.plot(mov_avg_200, 'm', label='Moving average 200 days') # plots MA for 200 days in magenta
+    plt.plot(df['Close'], label='TSLA Close Price')  # plots Closing price, adds label
+    plt.plot(mov_avg_100, 'r', label='Moving average 100 days')  # plots MA for 100 days in red
+    plt.plot(mov_avg_200, 'm', label='Moving average 200 days')  # plots MA for 200 days in magenta
     # labels
     plt.title('TSLA Stock Close Price Over Time')
     plt.xlabel('Date')
     plt.ylabel('Close Price (USD)')
     plt.legend()
-    plt.show() # print plot
+    plt.show()  # print plot
 
 def prepare_training_data(df):
     # for ML model
-    data_training = pd.DataFrame(df['Close'][0:int(len(df)*0.70)]) # starts from 0 and goes to 70% of data
+    data_training = pd.DataFrame(df['Close'][0:int(len(df) * 0.70)])  # starts from 0 and goes to 70% of data
     # define training model
-    scaler = MinMaxScaler(feature_range=(0,1))
+    scaler = MinMaxScaler(feature_range=(0, 1))
     data_training_array = scaler.fit_transform(data_training)
 
     # preparing training data
@@ -113,48 +108,45 @@ def build_and_train_model(x_train, y_train):
     model = Sequential()
     model.add(Input(shape=(x_train.shape[1], 1)))  # Explicitly define the input shape
     # add first LSTM layer with dropout = 0.2
-    model.add(LSTM(units = 50, activation = 'relu', return_sequences = True))
+    model.add(LSTM(units=50, activation='relu', return_sequences=True))
     model.add(Dropout(0.2))
 
-
     # add second LSTM layer with dropout = 0.3
-    model.add(LSTM(units = 60, activation = 'relu', return_sequences = True))
+    model.add(LSTM(units=60, activation='relu', return_sequences=True))
     model.add(Dropout(0.3))
 
-
     # add third LSTM layer with dropout = 0.4
-    model.add(LSTM(units = 80, activation = 'relu', return_sequences = True))
+    model.add(LSTM(units=80, activation='relu', return_sequences=True))
     model.add(Dropout(0.4))
 
-
     # add fourth LSTM layer with dropout = 0.5
-    model.add(LSTM(units = 120, activation = 'relu'))
+    model.add(LSTM(units=120, activation='relu'))
     model.add(Dropout(0.5))
 
-    model.add(Dense(units = 1)) # output layer
+    model.add(Dense(units=1))  # output layer
 
     print(model.summary())
 
     # compile model
-    model.compile(optimizer='adam', loss = 'mean_squared_error')
+    model.compile(optimizer='adam', loss='mean_squared_error')
     # train model
-    model.fit(x_train, y_train, epochs = 50)
+    model.fit(x_train, y_train, epochs=50)
 
-    model.save('initial_model.keras') # save model (need to figure out how to be able to re-use the saved model)
+    model.save('initial_model.keras')  # save model
     return model
 
 def load_model_from_file(model_path):
     return load_model(model_path)
 
 def prepare_testing_data(df, scaler):
-    data_testing = pd.DataFrame(df['Close'][int(len(df)*0.70):]) # starts from 70% and until end of data
-    previous_100_days = df.tail(100) # take previous 100 days
+    data_testing = pd.DataFrame(df['Close'][int(len(df) * 0.70):])  # starts from 70% and until end of data
+    previous_100_days = df.tail(100)  # take previous 100 days
 
     # append previous 100 days to the data_testing, and set as final_df
-    final_df = pd.concat([previous_100_days, data_testing], ignore_index = True)
+    final_df = pd.concat([previous_100_days, data_testing], ignore_index=True)
 
     # normalize the final dataset
-    input_data =  scaler.fit_transform(final_df)
+    input_data = scaler.fit_transform(final_df)
 
     # prep test data sequences
     x_test = []
@@ -171,26 +163,25 @@ def prepare_testing_data(df, scaler):
 
 def plot_predictions(y_test, y_predicted):
     # plot originals vs predicted prices
-    plt.figure(figsize = (12,6))
-    plt.plot(y_test, 'b', label = 'Original Price')
-    plt.plot(y_predicted, 'r', label = 'Predicted Price')
+    plt.figure(figsize=(12, 6))
+    plt.plot(y_test, 'b', label='Original Price')
+    plt.plot(y_predicted, 'r', label='Predicted Price')
     plt.xlabel('Time')
     plt.ylabel('Price')
     plt.legend()
     plt.show()
 
-def create_site():
-    st.title("Stock Predictor App")
-    stocks = ("APPL", "GOOG", "MSFT", "TSLA", "GME")
-    selected_stock = st.selectbox("Select a stock for prediction", stocks)
-    n_years = st.slider("Years of prediction:", 1, 4)
-    period = n_years * 365
-
+# store raw data in MongoDB
+def store_raw_data_in_mongo(data, ticker):
+    records = data.to_dict('records')
+    for record in records:
+        record['ticker'] = ticker
+    collection.insert_many(records)
 
 def main():
     # define timeline for stock pull
-    start = '2019-01-01' # from specified date
-    end = datetime.now().strftime('%Y-%m-%d') # to todays date
+    start = '2019-01-01'  # from specified date
+    end = datetime.now().strftime('%Y-%m-%d')  # to today's date
     ticker = 'TSLA'
     db = database.get_db()
 
@@ -202,6 +193,7 @@ def main():
         database.save_to_mongo(db, "stock_prices", df)
 
         plot_stock_data(df)
+        store_raw_data_in_mongo(df, ticker)  # store raw data in MongoDB
 
         x_train, y_train, scaler = prepare_training_data(df)
         model = build_and_train_model(x_train, y_train)
@@ -222,34 +214,7 @@ def main():
     else:
         print("Failed to fetch stock data")
 
-
-
-def run_model():
-    start = '2019-01-01'
-    end = datetime.now().strftime('%Y-%m-%d')
-    ticker = 'TSLA'
-
-    df = fetch_stock_data(ticker, start, end)
-    if df is not None:
-        df = preprocess_data(df)
-        plot_stock_data(df)
-
-        # Load the scaler
-        scaler = MinMaxScaler(feature_range=(0, 1))
-        scaler.scale_ = np.load('scaler.npy')
-
-        model = load_model_from_file('initial_model.keras')
-        x_test, y_test = prepare_testing_data(df, scaler)
-        y_predicted = model.predict(x_test)
-
-        scale_factor = 1 / float(scaler.scale_[0])
-        y_predicted = y_predicted * scale_factor
-        y_test = y_test * scale_factor
-
-        plot_predictions(y_test, y_predicted)
-    else:
-        print("Failed to fetch stock data")
-
 main()
+
 #run_model()
 #create_site()
