@@ -10,12 +10,47 @@ from tensorflow.keras.layers import Dense, Dropout, LSTM, Input
 from tensorflow.keras.models import Sequential, load_model
 import streamlit as st
 from fbprophet import Prophet
-from pymongo import MongoClient
 
-# MongoDB connection
-client = MongoClient('mongodb://localhost:27017/')
-db = client['stock_data']
-collection = db['raw_data']
+
+
+#import os
+#os.environ['PYTHONIOENCODING'] = 'utf-8'
+#import sys
+#sys.stdout.reconfigure(encoding='utf-8')
+
+import io
+import sys
+sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding='utf-8')
+sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding='utf-8')
+
+def get_db():
+    # Set up the MongoDB client and specify the database and collection
+    print("Database created")
+    client = MongoClient('mongodb://localhost:27017/')  # Adjust the URI as necessary
+    db = client['stock_database']
+    return db
+
+def save_to_mongo(db, collection_name, data):
+    print(f"Inserting data into MongoDB: {data_dict[:5]}")  # Print first 5 records for confirmation
+    collection = db[collection_name]
+    if isinstance(data, pd.DataFrame):
+        # Convert the dataframe to a dictionary and insert it into the collection
+        data_dict = data.to_dict("records")
+        collection.insert_many(data_dict)
+    elif isinstance(data, dict):
+        # If data is a single dictionary, insert it directly
+        collection.insert_one(data)
+    else:
+        print("Unsupported data type for MongoDB insertion.")
+        
+def fetch_and_store_stock_data(ticker, start, end):
+    db = get_db()
+    data = fetch_stock_data(ticker, start, end)
+    if data is not None:
+        data = preprocess_data(data)
+        save_to_mongo(db, "stock_prices", data)
+        return data
+    return None
 
 def fetch_stock_data(ticker, start, end):
     try:
@@ -148,10 +183,15 @@ def main():
     start = '2019-01-01'  # from specified date
     end = datetime.now().strftime('%Y-%m-%d')  # to today's date
     ticker = 'TSLA'
+    db = database.get_db()
 
     df = fetch_stock_data(ticker, start, end)
     if df is not None:
         df = preprocess_data(df)
+
+        #Save to MongoDB
+        database.save_to_mongo(db, "stock_prices", df)
+
         plot_stock_data(df)
         store_raw_data_in_mongo(df, ticker)  # store raw data in MongoDB
 

@@ -8,32 +8,70 @@ import numpy as np
 import pandas as pd
 from pymongo import MongoClient
 from loginsignupbuttons import buttons, display_page
+from site_background import background
+from signals import plot_signals
 
-start = '2019-01-01'  # from specified date
-end = datetime.now().strftime('%Y-%m-%d')  # to today's date
 
-# MongoDB connection
-client = MongoClient('mongodb://localhost:27017/')
-db = client['stock_data']
-collection = db['raw_data']
+
+start = '2019-01-01' # from specified date
+end = datetime.now().strftime('%Y-%m-%d') # to todays date
 
 def create_site():
-    buttons()
-    display_page()
-    st.title("Stock Predictor App")  # main title
-    stocks = ("AAPL", "GOOG", "META", "TSLA", "GME")  # current list of stocks, needs updated to dynamic selection
-    selected_stock = st.selectbox("Select a stock for prediction", stocks) 
-    n_years = st.slider("Years of prediction:", 1, 4)  # slider provides years for prediction
-    period = n_years * 365
-    data_load_state = st.text("Load data...")
-    data = fetch_stock_data(selected_stock, start, end)  # loads data
-    data = preprocess_data(data)  # resets index (gives date an actual value rather than index)
-    store_raw_data_in_mongo(data, selected_stock)  # store raw data in MongoDB
-    data_load_state.text("Loading data... done!")
-    st.subheader("Raw data")  # header for data
-    st.write(data.tail())  # prints tail end of data 
-    plot_raw_data(data)  # runs plot raw data
-    forecast(data, period)  # runs prediction model
+    buttons()  # Handles the display and functionality of login/signup buttons
+    display_page()  # Manages what page to display based on login status
+    background() # Import background image for website
+    
+    # Only show the main content if the user is logged in
+    if st.session_state.get('logged_in', False):
+        st.title("Stock Predictor App")  # Main title
+        stocks = ("AAPL", "GOOG", "META", "TSLA", "GME")
+        selected_stock = select_stock()
+
+        n_years = st.slider("Years of prediction:", 1, 4, key="years_slider")
+        period = n_years * 365
+
+        data_load_state = st.text("Loading data...")
+        data = fetch_stock_data(selected_stock, start='2019-01-01', end=datetime.now().strftime('%Y-%m-%d'))
+        #db = database.get_db()
+
+        #Save to MongoDB
+        #database.save_to_mongo(db, "stock_prices", data)
+
+        if data is not None:
+            data = preprocess_data(data)
+            data_load_state.text("Loading data... done!")
+            st.subheader("Raw data")
+            st.write(data.tail())
+            plot_raw_data(data)
+            forecast(data, period)
+            plot_signals(data, selected_stock)
+
+    else:
+        st.title("Please log in to access the Stock Predictor App")
+
+def select_stock():
+    if 'stocks' not in st.session_state:
+        st.session_state.stocks = ["AAPL", "GOOG", "META", "TSLA", "GME"]
+    new_stock = st.text_input("Enter a new stock symbol to add: ", key="new_stock")
+    if st.button("Add stock", key="add_stock_button"):
+        add_stock_to_list()
+        #st.experimental_rerun()
+    selected_stock = st.selectbox("Select a stock for prediction", st.session_state.stocks, key="selected_stock")
+    return selected_stock
+
+def add_stock_to_list():
+    new_stock = st.session_state.new_stock.strip().upper()
+    if new_stock:
+        temp = fetch_stock_data(new_stock, start, end)
+        if temp is None or temp.empty:
+            st.error("Please enter a valid stock symbol.")
+        elif new_stock and new_stock not in st.session_state.stocks:
+            st.session_state.stocks.append(new_stock)
+            st.success(f"{new_stock} added to the list!")
+        elif new_stock in st.session_state.stocks:
+            st.warning(f"{new_stock} is already in the list!")
+
+
 
 @st.cache_data  # save data to cache to make faster
 def fetch_stock_data(ticker, start, end):
@@ -84,12 +122,7 @@ def forecast(data, period):
     figure2 = model.plot_components(forecast)
     st.write(figure2)   
 
-# store raw data in MongoDB
-def store_raw_data_in_mongo(data, ticker):
-    records = data.to_dict('records')
-    for record in records:
-        record['ticker'] = ticker
-    collection.insert_many(records)
+
 
 # for now this is main function that runs (calls sub functions)
 create_site()
