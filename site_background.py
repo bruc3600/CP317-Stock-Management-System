@@ -8,12 +8,12 @@ def get_base64_of_file(path):
     return encoded
 
 def background():
-    # Path to your video file
-    video_path = 'background.mp4'  # Change this to your local path
-    video_string = get_base64_of_file(video_path)
+    # Path to your image file
+    image_path = 'background.jpg'  # Change this to your local path
+    image_string = get_base64_of_file(image_path)
 
     # HTML to inject contained within a Python multiline string
-    background_video_html = f"""
+    background_image_html = f"""
     <style>
     body, html {{
         height: 100%;
@@ -22,30 +22,14 @@ def background():
 
     .stApp {{
         height: 100%;
-        background: no-repeat center center fixed; 
+        background: url("data:image/jpeg;base64,{image_string}") no-repeat center center fixed; 
+        background-size: cover;
         display: flex;
         justify-content: center;
         align-items: center;
     }}
-
-    .background_video {{
-        position: fixed;
-        right: 0;
-        bottom: 0;
-        min-width: 100%; 
-        min-height: 100%;
-        width: auto; 
-        height: auto; 
-        z-index: -100;
-        background-size: cover;
-        overflow: hidden;
-    }}
     </style>
-    <video class="background_video" autoplay loop muted>
-        <source src="data:video/mp4;base64,{video_string}" type="video/mp4">
-        Your browser does not support the video tag.
-    </video>
     """
 
     # Inject HTML with markdown
-    st.markdown(background_video_html, unsafe_allow_html=True)
+    st.markdown(background_image_html, unsafe_allow_html=True)
