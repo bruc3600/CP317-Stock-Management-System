@@ -46,7 +46,7 @@ def create_site():
             plot_signals(data, selected_stock)
 
     else:
-        st.title("Please log in to access the Stock Predictor App")  
+        st.title("Please log in to access the Stock Predictor App")
 
 def select_stock():
     if 'stocks' not in st.session_state:
