@@ -136,16 +136,15 @@ def forecast(data, period):
     st.write(forecast.tail()) # shows just the forecast data in table
 
     # plot forecast data using plotly
-    st.write('Forecast Data Plot')
+    st.subheader('Forecast Data Plot')
     forecastfigure1 = plot_plotly(model, forecast) 
     st.plotly_chart(forecastfigure1)
 
     # plot forecast components
-    st.write('Forecast components')
+    st.subheader('Forecast components')
     figure2 = model.plot_components(forecast)
     st.write(figure2)   
 
 
-
-# for now this is main function that runs (calls sub functions)
     pass
+# for now this is main function that runs (calls sub functions)
