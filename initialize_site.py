@@ -19,8 +19,6 @@ def create_site():
     # Custom CSS to change text color to black
     st.markdown("""
         <style>
-        html, body, div, span, app, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre,
-        a, abbr, acronym, address, big, cite, code,
         del, dfn, em, img, ins, kbd, q, s, samp,
         small, strike, strong, sub, sup, tt, var,
         b, u, i, center,
@@ -28,9 +26,9 @@ def create_site():
         fieldset, form, label, legend,
         table, caption, tbody, tfoot, thead, tr, th, td,
         article, aside, canvas, details, embed,
-        figure, figcaption, footer, header, hgroup,
-        menu, nav, output, ruby, section, summary,
-        time, mark, audio, video {
+        figure, figcaption, footer, header, hgroup,        
+        section
+         {
             color: black !important;
         }
         </style>
