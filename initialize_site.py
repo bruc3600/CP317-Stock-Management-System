@@ -16,6 +16,25 @@ start = '2019-01-01' # from specified date
 end = datetime.now().strftime('%Y-%m-%d') # to todays date
 
 def create_site():
+    # Custom CSS to change text color to black
+    st.markdown("""
+        <style>
+        html, body, div, span, app, iframe, h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+        a, abbr, acronym, address, big, cite, code,
+        del, dfn, em, img, ins, kbd, q, s, samp,
+        small, strike, strong, sub, sup, tt, var,
+        b, u, i, center,
+        dl, dt, dd, ol, ul, li,
+        fieldset, form, label, legend,
+        table, caption, tbody, tfoot, thead, tr, th, td,
+        article, aside, canvas, details, embed,
+        figure, figcaption, footer, header, hgroup,
+        menu, nav, output, ruby, section, summary,
+        time, mark, audio, video {
+            color: black !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
     buttons()  # Handles the display and functionality of login/signup buttons
     display_page()  # Manages what page to display based on login status
     background() # Import background image for website
