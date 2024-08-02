@@ -9,7 +9,7 @@ import pandas as pd
 from loginsignupbuttons import buttons, display_page
 from site_background import background
 from signals import plot_signals
-
+from portfolio import authenticate_user, add_user_to_db, load_user_stocks, add_stock_to_user, remove_stock_from_user
 
 
 start = '2019-01-01' # from specified date
@@ -39,19 +39,18 @@ def create_site():
     
     # Only show the main content if the user is logged in
     if st.session_state.get('logged_in', False):
-        st.title("Stock Predictor App")  # Main title
-        stocks = ("AAPL", "GOOG", "META", "TSLA", "GME")
-        selected_stock = select_stock()
+        email = st.session_state.get('user_email')  # Assumes email is stored in session_state on login
+        st.title("Stock Predictor App")
+        if 'stocks' not in st.session_state:
+            st.session_state.stocks = load_user_stocks(email)
 
-        n_years = st.slider("Years of prediction:", 1, 4, key="years_slider")
+        selected_stock = select_stock(email)
+
+        n_years = st.slider("Years of prediction:", 1, 4)
         period = n_years * 365
 
         data_load_state = st.text("Loading data...")
-        data = fetch_stock_data(selected_stock, start='2019-01-01', end=datetime.now().strftime('%Y-%m-%d'))
-        #db = database.get_db()
-
-        #Save to MongoDB
-        #database.save_to_mongo(db, "stock_prices", data)
+        data = fetch_stock_data(selected_stock, start, end)
 
         if data is not None:
             data = preprocess_data(data)
@@ -65,14 +64,19 @@ def create_site():
     else:
         st.title("Please log in to access the Stock Predictor App")
 
-def select_stock():
-    if 'stocks' not in st.session_state:
-        st.session_state.stocks = ["AAPL", "GOOG", "META", "TSLA", "GME"]
-    new_stock = st.text_input("Enter a new stock symbol to add: ", key="new_stock")
-    if st.button("Add stock", key="add_stock_button"):
-        add_stock_to_list()
-        #st.experimental_rerun()
-    selected_stock = st.selectbox("Select a stock for prediction", st.session_state.stocks, key="selected_stock")
+def select_stock(email):
+    new_stock = st.text_input("Enter a new stock symbol to add:")
+    if st.button("Add stock"):
+        if new_stock:
+            new_stock = new_stock.strip().upper()
+            temp = fetch_stock_data(new_stock, start, end)
+            if temp is not None and not temp.empty:
+                add_stock_to_user(email, new_stock)
+                st.session_state.stocks.append(new_stock)
+                st.success(f"{new_stock} added to the list!")
+            else:
+                st.error("Please enter a valid stock symbol.")
+    selected_stock = st.selectbox("Select a stock for prediction", st.session_state.stocks)
     return selected_stock
 
 def add_stock_to_list():
@@ -86,7 +90,6 @@ def add_stock_to_list():
             st.success(f"{new_stock} added to the list!")
         elif new_stock in st.session_state.stocks:
             st.warning(f"{new_stock} is already in the list!")
-
 
 
 @st.cache_data # save data to cache to make faster
