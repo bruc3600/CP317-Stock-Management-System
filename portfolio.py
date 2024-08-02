@@ -1,5 +1,6 @@
 import sqlite3
 import re
+import bcrypt
 
 def create_database():
     conn = sqlite3.connect('users.db')
@@ -30,7 +31,8 @@ def add_user_to_db(name, email, password):
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
     try:
-        c.execute("INSERT INTO users (name, email, password) VALUES (?, ?, ?)", (name, email, password))
+        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        c.execute("INSERT INTO users (name, email, password) VALUES (?, ?, ?)", (name, email, hashed_password))
         conn.commit()
         return "success"
     except sqlite3.IntegrityError:
@@ -47,7 +49,7 @@ def authenticate_user(email, password):
     try:
         c.execute("SELECT name, password FROM users WHERE email = ?", (email,))
         user_info = c.fetchone()
-        if user_info and user_info[1] == password:
+        if user_info and bcrypt.checkpw(password.encode('utf-8'), user_info[1].encode('utf-8')):
             return True, user_info[0]  # Return True and the user's name
         else:
             return False, None
