@@ -129,4 +129,4 @@ def forecast(data, period):
 
 
 # for now this is main function that runs (calls sub functions)
-create_site()
+    pass
