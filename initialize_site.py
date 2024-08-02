@@ -55,6 +55,10 @@ def create_site():
         if data is not None:
             data = preprocess_data(data)
             data_load_state.text("Loading data... done!")
+            symbol = yf.Ticker(selected_stock) # get symbol
+            info = symbol.info # download info from yfinance
+            stock_name = info.get('longName') # get name of stock
+            st.subheader(f"Displaying data for: {selected_stock} - {stock_name}") # display stock symbol & name
             st.subheader("Raw data")
             st.write(data.tail())
             plot_raw_data(data)
@@ -64,47 +68,64 @@ def create_site():
     else:
         st.title("Please log in to access the Stock Predictor App")
 
+# adds / removes stock from st list, as well as user db
 def select_stock(email):
-    new_stock = st.text_input("Enter a new stock symbol to add:")
+    # add stock
+    new_stock = st.text_input("Enter a new stock symbol to add to your portfolio:")
     if st.button("Add stock"):
         if new_stock:
             new_stock = new_stock.strip().upper()
             temp = fetch_stock_data(new_stock, start, end)
             if temp is not None and not temp.empty:
-                add_stock_to_user(email, new_stock)
-                st.session_state.stocks.append(new_stock)
-                st.success(f"{new_stock} added to the list!")
+                if new_stock not in st.session_state.stocks:
+                    add_stock_to_user(email, new_stock)
+                    st.session_state.stocks.append(new_stock)
+                    st.success(f"{new_stock} added to your portfolio!")
+                else:
+                    st.error("Stock already added.")
             else:
                 st.error("Please enter a valid stock symbol.")
+
+    # remove stock
+    desired_stock = st.text_input("Enter a stock symbol to remove from your portfolio:")
+    if st.button("Remove stock"):
+        if desired_stock:
+            desired_stock = desired_stock.strip().upper()
+            if desired_stock in st.session_state.stocks:
+                remove_stock_from_user(email, desired_stock)
+                st.session_state.stocks.remove(desired_stock)
+                st.success(f"{desired_stock} removed from your portfolio!")
+            else:
+                st.error("Stock not found in your current portfolio.")
+            
     selected_stock = st.selectbox("Select a stock for prediction", st.session_state.stocks)
     return selected_stock
 
-def add_stock_to_list():
-    new_stock = st.session_state.new_stock.strip().upper()
-    if new_stock:
-        temp = fetch_stock_data(new_stock, start, end)
-        if temp is None or temp.empty:
-            st.error("Please enter a valid stock symbol.")
-        elif new_stock and new_stock not in st.session_state.stocks:
-            st.session_state.stocks.append(new_stock)
-            st.success(f"{new_stock} added to the list!")
-        elif new_stock in st.session_state.stocks:
-            st.warning(f"{new_stock} is already in the list!")
+# def add_stock_to_list():
+#     new_stock = st.session_state.new_stock.strip().upper()
+#     if new_stock:
+#         temp = fetch_stock_data(new_stock, start, end)
+#         if temp is None or temp.empty:
+#             st.error("Please enter a valid stock symbol.")
+#         elif new_stock and new_stock not in st.session_state.stocks:
+#             st.session_state.stocks.append(new_stock)
+#             st.success(f"{new_stock} added to the list!")
+#         elif new_stock in st.session_state.stocks:
+#             st.warning(f"{new_stock} is already in the list!")
 
 
 @st.cache_data # save data to cache to make faster
 def fetch_stock_data(ticker, start, end):
     try:
-        data = yf.download(ticker, start=start, end=end) # pull TSLA stock as start point, from specified start to end date
+        data = yf.download(ticker, start=start, end=end) # pull ticker from specified start to end date
         return data
     except Exception as e:
         print("Failed to fetch data:", e) # in case of error, print exception rather than crashing.
         return None
     
-# format and create index for values; remove date and Adj Close from value tables
+# format and create index for values (instead of date being index)
 def preprocess_data(data):
     data = data.reset_index()
-    #data = data.drop(['Date', 'Adj Close'], axis = 1)
     return data
 
 # plots open and close raw prices

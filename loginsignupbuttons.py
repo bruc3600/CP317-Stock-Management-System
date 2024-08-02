@@ -45,8 +45,9 @@ def login_page():
             authenticated, user_name = authenticate_user(email, password)  # Now returns a tuple
             if authenticated:
                 st.session_state['logged_in'] = True
-                st.session_state['user_name'] = user_name  # Display the user's name
+                st.session_state['user_name'] = user_name  # declare the user's name
                 st.session_state['page'] = 'home'
+                st.session_state['user_email'] = email # declare email in session state as user_email to be used
                 st.success(f"You have successfully logged in, {user_name}!")  # Include user's name in the message
             else:
                 st.error("Login failed. Check your credentials.")

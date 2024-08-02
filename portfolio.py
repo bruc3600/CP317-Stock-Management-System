@@ -65,6 +65,7 @@ def load_user_stocks(email):
         conn.close()
 
 def add_stock_to_user(email, stock):
+    print("attempting to add stock ", stock, " to user ", email)
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
     try:
