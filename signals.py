@@ -44,7 +44,7 @@ def plot_signals(data, selected_stock):
     week_forecast = forecast[forecast['ds'] >= datetime.now().strftime('%Y-%m-%d')]
 
     #Plot Buy/Sell signals
-    st.write('Buy/Sell Signals for the Next 7 Days')
+    st.subheader('Buy/Sell Signals for the Next 7 Days')
     buy_signals = week_forecast[(week_forecast['signal'] == 'Buy')]
     sell_signals = week_forecast[(week_forecast['signal'] == 'Sell')]
 
