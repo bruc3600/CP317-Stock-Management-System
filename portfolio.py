@@ -10,7 +10,7 @@ def create_database():
         CREATE TABLE IF NOT EXISTS users (
             name TEXT,
             email TEXT PRIMARY KEY,
-            password TEXT
+            password BLOB
         )
         ''')
         c.execute('''
@@ -31,7 +31,7 @@ def add_user_to_db(name, email, password):
     conn = sqlite3.connect('users.db')
     c = conn.cursor()
     try:
-        hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
+        #hashed_password = bcrypt.hashpw(password.encode('utf-8'), bcrypt.gensalt())
         c.execute("INSERT INTO users (name, email, password) VALUES (?, ?, ?)", (name, email, hashed_password))
         conn.commit()
         return "success"
